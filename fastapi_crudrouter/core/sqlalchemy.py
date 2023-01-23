@@ -216,7 +216,7 @@ class SQLAlchemyAsyncCRUDRouter(CRUDGenerator[SCHEMA]):
         ) -> List[Model]:
             skip, limit = pagination.get("skip"), pagination.get("limit")
 
-            result: AsyncResult = db.execute(
+            result: AsyncResult = await db.execute(
                 select(self.db_model).order_by(getattr(
                     self.db_model, self._pk)).limit(limit).offset(skip))
             db_models: List[Model] = result.scalars().all()
