@@ -9,7 +9,8 @@ try:
     from sqlalchemy.orm import Session
     from sqlalchemy.ext.declarative import DeclarativeMeta as Model
     from sqlalchemy.exc import IntegrityError
-    from sqlalchemy.ext.asyncio import AsyncSession, Result
+    from sqlalchemy.ext.asyncio import AsyncSession
+    from sqlalchemy.ext.asyncio.result import AsyncResult
     from sqlalchemy.future import select
 except ImportError:
     Model = None
@@ -215,7 +216,7 @@ class SQLAlchemyAsyncCRUDRouter(CRUDGenerator[SCHEMA]):
         ) -> List[Model]:
             skip, limit = pagination.get("skip"), pagination.get("limit")
 
-            result: Result = db.execute(
+            result: AsyncResult = db.execute(
                 select(self.db_model).order_by(getattr(
                     self.db_model, self._pk)).limit(limit).offset(skip))
             db_models: List[Model] = result.scalars().all()
