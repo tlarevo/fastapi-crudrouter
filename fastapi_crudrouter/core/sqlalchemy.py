@@ -10,6 +10,7 @@ try:
     from sqlalchemy.ext.declarative import DeclarativeMeta as Model
     from sqlalchemy.exc import IntegrityError
     from sqlalchemy.ext.asyncio import AsyncSession
+    from sqlalchemy.future import select
 except ImportError:
     Model = None
     Session = None
@@ -214,9 +215,9 @@ class SQLAlchemyAsyncCRUDRouter(CRUDGenerator[SCHEMA]):
         ) -> List[Model]:
             skip, limit = pagination.get("skip"), pagination.get("limit")
 
-            db_models: List[Model] = await (db.query(self.db_model).order_by(
-                getattr(self.db_model,
-                        self._pk)).limit(limit).offset(skip).all())
+            db_models: List[Model] = await db.execute(
+                select(self.db_model).order_by(getattr(
+                    self.db_model, self._pk)).limit(limit).offset(skip).all())
             return db_models
 
         return route
@@ -227,7 +228,7 @@ class SQLAlchemyAsyncCRUDRouter(CRUDGenerator[SCHEMA]):
                 item_id: self._pk_type,
                 db: AsyncSession = Depends(self.db_func)  # type: ignore
         ) -> Model:
-            model: Model = await db.query(self.db_model).get(item_id)
+            model: Model = await db.get(self.db_model, item_id)
 
             if model:
                 return model
@@ -282,7 +283,7 @@ class SQLAlchemyAsyncCRUDRouter(CRUDGenerator[SCHEMA]):
 
         async def route(db: AsyncSession = Depends(
             self.db_func)) -> List[Model]:
-            await db.query(self.db_model).delete()
+            await db.delete(self.db_model)
             await db.commit()
 
             return self._get_all()(db=db,
